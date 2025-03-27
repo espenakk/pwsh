@@ -1,50 +1,12 @@
 ### PowerShell Profile Refactor
 ### Version 1.03 - Refactored
 
-$debug = $false
-
 # Define the path to the file that stores the last execution time
 $timeFilePath = [Environment]::GetFolderPath("MyDocuments") + "\PowerShell\LastExecutionTime.txt"
 
 # Define the update interval in days, set to -1 to always check
-$updateInterval = 7
+$updateInterval = 90
 
-if ($debug) {
-    Write-Host "#######################################" -ForegroundColor Red
-    Write-Host "#           Debug mode enabled        #" -ForegroundColor Red
-    Write-Host "#          ONLY FOR DEVELOPMENT       #" -ForegroundColor Red
-    Write-Host "#                                     #" -ForegroundColor Red
-    Write-Host "#       IF YOU ARE NOT DEVELOPING     #" -ForegroundColor Red
-    Write-Host "#       JUST RUN \`Update-Profile\`     #" -ForegroundColor Red
-    Write-Host "#        to discard all changes       #" -ForegroundColor Red
-    Write-Host "#   and update to the latest profile  #" -ForegroundColor Red
-    Write-Host "#               version               #" -ForegroundColor Red
-    Write-Host "#######################################" -ForegroundColor Red
-}
-
-
-#################################################################################################################################
-############                                                                                                         ############
-############                                          !!!   WARNING:   !!!                                           ############
-############                                                                                                         ############
-############                DO NOT MODIFY THIS FILE. THIS FILE IS HASHED AND UPDATED AUTOMATICALLY.                  ############
-############                    ANY CHANGES MADE TO THIS FILE WILL BE OVERWRITTEN BY COMMITS TO                      ############
-############                       https://github.com/ChrisTitusTech/powershell-profile.git.                         ############
-############                                                                                                         ############
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
-############                                                                                                         ############
-############                      IF YOU WANT TO MAKE CHANGES, USE THE Edit-Profile FUNCTION                         ############
-############                              AND SAVE YOUR CHANGES IN THE FILE CREATED.                                 ############
-############                                                                                                         ############
-#################################################################################################################################
-
-#opt-out of telemetry before doing anything, only if PowerShell is run as admin
-if ([bool]([System.Security.Principal.WindowsIdentity]::GetCurrent()).IsSystem) {
-    [System.Environment]::SetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', 'true', [System.EnvironmentVariableTarget]::Machine)
-}
-
-# Initial GitHub.com connectivity check with 1 second timeout
-$global:canConnectToGitHub = Test-Connection github.com -Count 1 -Quiet -TimeoutSeconds 1
 
 # Import Modules and External Profiles
 # Ensure Terminal-Icons module is installed before importing
@@ -60,7 +22,7 @@ if (Test-Path($ChocolateyProfile)) {
 # Check for Profile Updates
 function Update-Profile {
     try {
-        $url = "https://raw.githubusercontent.com/ChrisTitusTech/powershell-profile/main/Microsoft.PowerShell_profile.ps1"
+        $url = "https://raw.githubusercontent.com/espenakk/pwsh/main/Microsoft.PowerShell_profile.ps1"
         $oldhash = Get-FileHash $PROFILE
         Invoke-RestMethod $url -OutFile "$env:temp/Microsoft.PowerShell_profile.ps1"
         $newhash = Get-FileHash "$env:temp/Microsoft.PowerShell_profile.ps1"
@@ -77,9 +39,8 @@ function Update-Profile {
     }
 }
 
-# Check if not in debug mode AND (updateInterval is -1 OR file doesn't exist OR time difference is greater than the update interval)
-if (-not $debug -and `
-    ($updateInterval -eq -1 -or `
+# Check if (updateInterval is -1 OR file doesn't exist OR time difference is greater than the update interval)
+if (($updateInterval -eq -1 -or `
       -not (Test-Path $timeFilePath) -or `
       ((Get-Date) - [datetime]::ParseExact((Get-Content -Path $timeFilePath), 'yyyy-MM-dd', $null)).TotalDays -gt $updateInterval)) {
 
@@ -87,8 +48,8 @@ if (-not $debug -and `
     $currentTime = Get-Date -Format 'yyyy-MM-dd'
     $currentTime | Out-File -FilePath $timeFilePath
 
-} elseif ($debug) {
-    Write-Warning "Skipping profile update check in debug mode"
+} else {
+    Write-Warning "Profile update skipped. Last update check was within the last $updateInterval day(s)."
 }
 
 function Update-PowerShell {
@@ -115,18 +76,16 @@ function Update-PowerShell {
     }
 }
 
-# skip in debug mode
 # Check if not in debug mode AND (updateInterval is -1 OR file doesn't exist OR time difference is greater than the update interval)
-if (-not $debug -and `
-    ($updateInterval -eq -1 -or `
+if (($updateInterval -eq -1 -or `
      -not (Test-Path $timeFilePath) -or `
      ((Get-Date).Date - [datetime]::ParseExact((Get-Content -Path $timeFilePath), 'yyyy-MM-dd', $null).Date).TotalDays -gt $updateInterval)) {
 
     Update-PowerShell
     $currentTime = Get-Date -Format 'yyyy-MM-dd'
     $currentTime | Out-File -FilePath $timeFilePath
-} elseif ($debug) {
-    Write-Warning "Skipping PowerShell update in debug mode"
+} else {
+    Write-Warning "PowerShell update skipped. Last update check was within the last $updateInterval day(s)."
 }
 
 function Clear-Cache {
@@ -160,30 +119,6 @@ function prompt {
 $adminSuffix = if ($isAdmin) { " [ADMIN]" } else { "" }
 $Host.UI.RawUI.WindowTitle = "PowerShell {0}$adminSuffix" -f $PSVersionTable.PSVersion.ToString()
 
-# Utility Functions
-function Test-CommandExists {
-    param($command)
-    $exists = $null -ne (Get-Command $command -ErrorAction SilentlyContinue)
-    return $exists
-}
-
-# Editor Configuration
-$EDITOR = if (Test-CommandExists nvim) { 'nvim' }
-          elseif (Test-CommandExists pvim) { 'pvim' }
-          elseif (Test-CommandExists vim) { 'vim' }
-          elseif (Test-CommandExists vi) { 'vi' }
-          elseif (Test-CommandExists code) { 'code' }
-          elseif (Test-CommandExists notepad++) { 'notepad++' }
-          elseif (Test-CommandExists sublime_text) { 'sublime_text' }
-          else { 'notepad' }
-Set-Alias -Name vim -Value $EDITOR
-
-# Quick Access to Editing the Profile
-function Edit-Profile {
-    vim $PROFILE.CurrentUserAllHosts
-}
-Set-Alias -Name ep -Value Edit-Profile
-
 function touch($file) { "" | Out-File $file -Encoding ASCII }
 function ff($name) {
     Get-ChildItem -recurse -filter "*${name}*" -ErrorAction SilentlyContinue | ForEach-Object {
@@ -197,11 +132,6 @@ function Get-PubIP { (Invoke-WebRequest http://ifconfig.me/ip).Content }
 # Open WinUtil full-release
 function winutil {
 	irm https://christitus.com/win | iex
-}
-
-# Open WinUtil pre-release
-function winutildev {
-	irm https://christitus.com/windev | iex
 }
 
 # System Utilities
@@ -260,47 +190,12 @@ function reload-profile {
     & $profile
 }
 
-function unzip ($file) {
-    Write-Output("Extracting", $file, "to", $pwd)
-    $fullFile = Get-ChildItem -Path $pwd -Filter $file | ForEach-Object { $_.FullName }
-    Expand-Archive -Path $fullFile -DestinationPath $pwd
-}
-function hb {
-    if ($args.Length -eq 0) {
-        Write-Error "No file path specified."
-        return
-    }
-    
-    $FilePath = $args[0]
-    
-    if (Test-Path $FilePath) {
-        $Content = Get-Content $FilePath -Raw
-    } else {
-        Write-Error "File path does not exist."
-        return
-    }
-    
-    $uri = "http://bin.christitus.com/documents"
-    try {
-        $response = Invoke-RestMethod -Uri $uri -Method Post -Body $Content -ErrorAction Stop
-        $hasteKey = $response.key
-        $url = "http://bin.christitus.com/$hasteKey"
-	Set-Clipboard $url
-        Write-Output $url
-    } catch {
-        Write-Error "Failed to upload the document. Error: $_"
-    }
-}
 function grep($regex, $dir) {
     if ( $dir ) {
         Get-ChildItem $dir | select-string $regex
         return
     }
     $input | select-string $regex
-}
-
-function df {
-    get-volume
 }
 
 function sed($file, $find, $replace) {
@@ -311,10 +206,6 @@ function which($name) {
     Get-Command $name | Select-Object -ExpandProperty Definition
 }
 
-function export($name, $value) {
-    set-item -force -path "env:$name" -value $value;
-}
-
 function pkill($name) {
     Get-Process $name -ErrorAction SilentlyContinue | Stop-Process
 }
@@ -322,22 +213,6 @@ function pkill($name) {
 function pgrep($name) {
     Get-Process $name
 }
-
-function head {
-  param($Path, $n = 10)
-  Get-Content $Path -Head $n
-}
-
-function tail {
-  param($Path, $n = 10, [switch]$f = $false)
-  Get-Content $Path -Tail $n -Wait:$f
-}
-
-# Quick File Creation
-function nf { param($name) New-Item -ItemType "file" -Path . -Name $name }
-
-# Directory Management
-function mkcd { param($dir) mkdir $dir -Force; Set-Location $dir }
 
 function trash($path) {
     $fullPath = (Resolve-Path -Path $path).Path
@@ -376,7 +251,7 @@ function docs {
 }
     
 function dtop { 
-    $dtop = if ([Environment]::GetFolderPath("Desktop")) {[Environment]::GetFolderPath("Desktop")} else {$HOME + "\Documents"}
+    $dtop = if ([Environment]::GetFolderPath("Desktop")) {[Environment]::GetFolderPath("Desktop")} else {$HOME + "\Desktop"}
     Set-Location -Path $dtop
 }
 
@@ -396,7 +271,7 @@ function gc { param($m) git commit -m "$m" }
 
 function gp { git push }
 
-function g { __zoxide_z github }
+function gpf { git push --force }
 
 function gcl { git clone "$args" }
 
@@ -404,10 +279,31 @@ function gcom {
     git add .
     git commit -m "$args"
 }
+
 function lazyg {
     git add .
     git commit -m "$args"
     git push
+}
+
+function gamend {
+    git commit -a --amend
+}
+
+function gl0 {
+    git log
+}
+
+function gl1 {
+    git log1
+}
+
+function gl2 {
+    git log2
+}
+
+function gl3 {
+    git log3
 }
 
 # Quick Access to System Information
@@ -542,8 +438,6 @@ $($PSStyle.Foreground.Green)Update-Profile$($PSStyle.Reset) - Checks for profile
 
 $($PSStyle.Foreground.Green)Update-PowerShell$($PSStyle.Reset) - Checks for the latest PowerShell release and updates if a new version is available.
 
-$($PSStyle.Foreground.Green)Edit-Profile$($PSStyle.Reset) - Opens the current user's profile for editing using the configured editor.
-
 $($PSStyle.Foreground.Green)touch$($PSStyle.Reset) <file> - Creates a new empty file.
 
 $($PSStyle.Foreground.Green)ff$($PSStyle.Reset) <name> - Finds files recursively with the specified name.
@@ -552,43 +446,23 @@ $($PSStyle.Foreground.Green)Get-PubIP$($PSStyle.Reset) - Retrieves the public IP
 
 $($PSStyle.Foreground.Green)winutil$($PSStyle.Reset) - Runs the latest WinUtil full-release script from Chris Titus Tech.
 
-$($PSStyle.Foreground.Green)winutildev$($PSStyle.Reset) - Runs the latest WinUtil pre-release script from Chris Titus Tech.
-
 $($PSStyle.Foreground.Green)uptime$($PSStyle.Reset) - Displays the system uptime.
 
 $($PSStyle.Foreground.Green)reload-profile$($PSStyle.Reset) - Reloads the current user's PowerShell profile.
 
-$($PSStyle.Foreground.Green)unzip$($PSStyle.Reset) <file> - Extracts a zip file to the current directory.
-
-$($PSStyle.Foreground.Green)hb$($PSStyle.Reset) <file> - Uploads the specified file's content to a hastebin-like service and returns the URL.
-
 $($PSStyle.Foreground.Green)grep$($PSStyle.Reset) <regex> [dir] - Searches for a regex pattern in files within the specified directory or from the pipeline input.
-
-$($PSStyle.Foreground.Green)df$($PSStyle.Reset) - Displays information about volumes.
 
 $($PSStyle.Foreground.Green)sed$($PSStyle.Reset) <file> <find> <replace> - Replaces text in a file.
 
 $($PSStyle.Foreground.Green)which$($PSStyle.Reset) <name> - Shows the path of the command.
 
-$($PSStyle.Foreground.Green)export$($PSStyle.Reset) <name> <value> - Sets an environment variable.
-
 $($PSStyle.Foreground.Green)pkill$($PSStyle.Reset) <name> - Kills processes by name.
 
 $($PSStyle.Foreground.Green)pgrep$($PSStyle.Reset) <name> - Lists processes by name.
 
-$($PSStyle.Foreground.Green)head$($PSStyle.Reset) <path> [n] - Displays the first n lines of a file (default 10).
-
-$($PSStyle.Foreground.Green)tail$($PSStyle.Reset) <path> [n] - Displays the last n lines of a file (default 10).
-
-$($PSStyle.Foreground.Green)nf$($PSStyle.Reset) <name> - Creates a new file with the specified name.
-
-$($PSStyle.Foreground.Green)mkcd$($PSStyle.Reset) <dir> - Creates and changes to a new directory.
-
 $($PSStyle.Foreground.Green)docs$($PSStyle.Reset) - Changes the current directory to the user's Documents folder.
 
 $($PSStyle.Foreground.Green)dtop$($PSStyle.Reset) - Changes the current directory to the user's Desktop folder.
-
-$($PSStyle.Foreground.Green)ep$($PSStyle.Reset) - Opens the profile for editing.
 
 $($PSStyle.Foreground.Green)k9$($PSStyle.Reset) <name> - Kills a process by name.
 
@@ -603,8 +477,6 @@ $($PSStyle.Foreground.Green)ga$($PSStyle.Reset) - Shortcut for 'git add .'.
 $($PSStyle.Foreground.Green)gc$($PSStyle.Reset) <message> - Shortcut for 'git commit -m'.
 
 $($PSStyle.Foreground.Green)gp$($PSStyle.Reset) - Shortcut for 'git push'.
-
-$($PSStyle.Foreground.Green)g$($PSStyle.Reset) - Changes to the GitHub directory.
 
 $($PSStyle.Foreground.Green)gcom$($PSStyle.Reset) <message> - Adds all changes and commits with the specified message.
 
@@ -621,10 +493,6 @@ $($PSStyle.Foreground.Green)pst$($PSStyle.Reset) - Retrieves text from the clipb
 Use '$($PSStyle.Foreground.Magenta)Show-Help$($PSStyle.Reset)' to display this help message.
 "@
     Write-Host $helpText
-}
-
-if (Test-Path "$PSScriptRoot\CTTcustom.ps1") {
-    Invoke-Expression -Command "& `"$PSScriptRoot\CTTcustom.ps1`""
 }
 
 Write-Host "$($PSStyle.Foreground.Yellow)Use 'Show-Help' to display help$($PSStyle.Reset)"

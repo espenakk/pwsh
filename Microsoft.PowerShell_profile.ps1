@@ -496,3 +496,9 @@ Use '$($PSStyle.Foreground.Magenta)Show-Help$($PSStyle.Reset)' to display this h
 }
 
 Write-Host "$($PSStyle.Foreground.Yellow)Use 'Show-Help' to display help$($PSStyle.Reset)"
+
+if (Get-Command fastfetch -ErrorAction SilentlyContinue) {
+    fastfetch
+} else {
+    Write-Host "fastfetch cmd not found." -ForegroundColor Yellow
+}

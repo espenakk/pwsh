@@ -5,7 +5,7 @@
 $timeFilePath = [Environment]::GetFolderPath("MyDocuments") + "\PowerShell\LastExecutionTime.txt"
 
 # Define the update interval in days, set to -1 to always check
-$updateInterval = 90
+$updateInterval = 30
 
 
 # Import Modules and External Profiles
@@ -48,8 +48,6 @@ if (($updateInterval -eq -1 -or `
     $currentTime = Get-Date -Format 'yyyy-MM-dd'
     $currentTime | Out-File -FilePath $timeFilePath
 
-} else {
-    Write-Warning "Profile update skipped. Last update check was within the last $updateInterval day(s)."
 }
 
 function Update-PowerShell {
@@ -84,8 +82,6 @@ if (($updateInterval -eq -1 -or `
     Update-PowerShell
     $currentTime = Get-Date -Format 'yyyy-MM-dd'
     $currentTime | Out-File -FilePath $timeFilePath
-} else {
-    Write-Warning "PowerShell update skipped. Last update check was within the last $updateInterval day(s)."
 }
 
 function Clear-Cache {
@@ -476,7 +472,7 @@ $($PSStyle.Foreground.Green)ga$($PSStyle.Reset) - Shortcut for 'git add .'.
 
 $($PSStyle.Foreground.Green)gc$($PSStyle.Reset) <message> - Shortcut for 'git commit -m'.
 
-$($PSStyle.Foreground.Green)gp$($PSStyle.Reset) - Shortcut for 'git push'.
+$($PSStyle.Foreground.Green)gpu$($PSStyle.Reset) - Shortcut for 'git push'.
 
 $($PSStyle.Foreground.Green)gcom$($PSStyle.Reset) <message> - Adds all changes and commits with the specified message.
 
@@ -495,7 +491,7 @@ Use '$($PSStyle.Foreground.Magenta)Show-Help$($PSStyle.Reset)' to display this h
     Write-Host $helpText
 }
 
-Write-Host "$($PSStyle.Foreground.Yellow)Use 'Show-Help' to display help$($PSStyle.Reset)"
+# Write-Host "$($PSStyle.Foreground.Yellow)Use 'Show-Help' to display help$($PSStyle.Reset)"
 
 if (Get-Command fastfetch -ErrorAction SilentlyContinue) {
     fastfetch

@@ -147,7 +147,6 @@ $scriptblock = {
 }
 Register-ArgumentCompleter -Native -CommandName dotnet -ScriptBlock $scriptblock
 
-
 if (Get-Command starship -ErrorAction SilentlyContinue) {
     Invoke-Expression (&starship init powershell)
 } else {
@@ -171,7 +170,7 @@ if (Get-Command zoxide -ErrorAction SilentlyContinue) {
         Write-Error "Failed to install zoxide."
     }
 }
-
+clear
 if (Get-Command fastfetch -ErrorAction SilentlyContinue) {
     fastfetch
 } else {

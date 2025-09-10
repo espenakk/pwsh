@@ -202,11 +202,10 @@ if (Get-Command bat -ErrorAction SilentlyContinue) {
     }
 }
 
-
-Set-Alias -Name ls -Value eza -lh --group-directories-first --icons=auto
-Set-Alias -Name lsa -Value ls -a
-Set-Alias -Name lt -Value eza --tree --level=2 --long --icons --git
-Set-Alias -Name lta -Value lt -a
-Set-Alias -Name ff -Value fzf --preview 'bat --style=numbers --color=always {}'
-Set-Alias -Name cd -Value z
+function newls { eza -lh --group-directories-first --icons=auto @args }
+function lsa { eza -lha --group-directories-first --icons=auto @args }
+function lt { eza --tree --level=2 --long --icons --git @args }
+function lta { eza --tree --level=2 --long --icons --git -a @args }
+function ff { fzf --preview 'bat --style=numbers --color=always {}' @args }
+Set-Alias -Name ls -Value newls
 Set-Alias -Name cat -Value bat

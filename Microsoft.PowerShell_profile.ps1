@@ -1,4 +1,3 @@
-
 # Check for Profile Updates
 function Update-Profile {
     $url = "https://raw.githubusercontent.com/espenakk/pwsh/master/Microsoft.PowerShell_profile.ps1"
@@ -170,15 +169,44 @@ if (Get-Command zoxide -ErrorAction SilentlyContinue) {
         Write-Error "Failed to install zoxide."
     }
 }
-clear
+
 if (Get-Command fastfetch -ErrorAction SilentlyContinue) {
-    fastfetch
+    # fastfetch
 } else {
     Write-Host "fastfetch not found. Installing via winget..." -ForegroundColor Yellow
     winget install --id fastfetch
     if (Get-Command fastfetch -ErrorAction SilentlyContinue) {
-        fastfetch
+        # fastfetch
     } else {
         Write-Error "Failed to install fastfetch."
     }
 }
+
+if (Get-Command eza -ErrorAction SilentlyContinue) {
+    # eza is installed
+} else {
+    Write-Host "eza not found. Installing via winget..." -ForegroundColor Yellow
+    winget install --id eza-community.eza
+    if (-not (Get-Command eza -ErrorAction SilentlyContinue)) {
+        Write-Error "Failed to install eza."
+    }
+}
+
+if (Get-Command bat -ErrorAction SilentlyContinue) {
+    # bat is installed
+} else {
+    Write-Host "bat not found. Installing via winget..." -ForegroundColor Yellow
+    winget install --id sharkdp.bat
+    if (-not (Get-Command bat -ErrorAction SilentlyContinue)) {
+        Write-Error "Failed to install bat."
+    }
+}
+
+
+Set-Alias -Name ls -Value eza -lh --group-directories-first --icons=auto
+Set-Alias -Name lsa -Value ls -a
+Set-Alias -Name lt -Value eza --tree --level=2 --long --icons --git
+Set-Alias -Name lta -Value lt -a
+Set-Alias -Name ff -Value fzf --preview 'bat --style=numbers --color=always {}'
+Set-Alias -Name cd -Value z
+Set-Alias -Name cat -Value bat

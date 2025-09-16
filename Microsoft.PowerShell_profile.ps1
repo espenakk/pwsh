@@ -208,4 +208,3 @@ function lt { eza --tree --level=2 --long --icons --git @args }
 function lta { eza --tree --level=2 --long --icons --git -a @args }
 function ff { fzf --preview 'bat --style=numbers --color=always {}' @args }
 Set-Alias -Name ls -Value newls
-Set-Alias -Name cat -Value bat
